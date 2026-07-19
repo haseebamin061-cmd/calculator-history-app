@@ -16,6 +16,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Get Git SHA
+        run: echo "SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
 
@@ -25,17 +28,21 @@ jobs:
 
       - name: Build Backend Image
         run: |
-          docker build -t haseebamin061/calculator-backend:latest ./backend
+          docker build -t haseebamin061/calculator-backend:latest -t haseebamin061/calculator-backend:${SHA} ./backend
 
       - name: Push Backend Image
         run: |
           docker push haseebamin061/calculator-backend:latest
+          docker push haseebamin061/calculator-backend:${SHA}
 
       - name: Build Nginx Image
         run: |
-          docker build -t haseebamin061/calculator-nginx:latest \
+          docker build \
+          -t haseebamin061/calculator-nginx:latest \
+          -t haseebamin061/calculator-nginx:${SHA} \
           -f nginx/Dockerfile .
 
       - name: Push Nginx Image
         run: |
           docker push haseebamin061/calculator-nginx:latest
+          docker push haseebamin061/calculator-nginx:${SHA}
