@@ -6,43 +6,88 @@ on:
       - main
 
 jobs:
-
   docker:
-
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Get Git SHA
         run: echo "SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
+      # -------------------------
+      # Docker Hub Login
+      # -------------------------
       - name: Login to Docker Hub
         uses: docker/login-action@v3
-
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
+      # -------------------------
+      # AWS Credentials
+      # -------------------------
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-1
+
+      # -------------------------
+      # ECR Login
+      # -------------------------
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # -------------------------
+      # Build Backend
+      # -------------------------
       - name: Build Backend Image
         run: |
-          docker build -t haseebamin061/calculator-backend:latest -t haseebamin061/calculator-backend:${SHA} ./backend
+          docker build \
+            -t haseebamin061/calculator-backend:latest \
+            -t haseebamin061/calculator-backend:${SHA} \
+            -t ${{ steps.ecr-login.outputs.registry }}/calculator-backend:latest \
+            -t ${{ steps.ecr-login.outputs.registry }}/calculator-backend:${SHA} \
+            ./backend
 
-      - name: Push Backend Image
+      # -------------------------
+      # Push Backend
+      # -------------------------
+      - name: Push Backend Image to Docker Hub
         run: |
           docker push haseebamin061/calculator-backend:latest
           docker push haseebamin061/calculator-backend:${SHA}
 
+      - name: Push Backend Image to ECR
+        run: |
+          docker push ${{ steps.ecr-login.outputs.registry }}/calculator-backend:latest
+          docker push ${{ steps.ecr-login.outputs.registry }}/calculator-backend:${SHA}
+
+      # -------------------------
+      # Build Nginx
+      # -------------------------
       - name: Build Nginx Image
         run: |
           docker build \
-          -t haseebamin061/calculator-nginx:latest \
-          -t haseebamin061/calculator-nginx:${SHA} \
-          -f nginx/Dockerfile .
+            -t haseebamin061/calculator-nginx:latest \
+            -t haseebamin061/calculator-nginx:${SHA} \
+            -t ${{ steps.ecr-login.outputs.registry }}/calculator-nginx:latest \
+            -t ${{ steps.ecr-login.outputs.registry }}/calculator-nginx:${SHA} \
+            -f nginx/Dockerfile .
 
-      - name: Push Nginx Image
+      # -------------------------
+      # Push Nginx
+      # -------------------------
+      - name: Push Nginx Image to Docker Hub
         run: |
           docker push haseebamin061/calculator-nginx:latest
           docker push haseebamin061/calculator-nginx:${SHA}
+
+      - name: Push Nginx Image to ECR
+        run: |
+          docker push ${{ steps.ecr-login.outputs.registry }}/calculator-nginx:latest
+          docker push ${{ steps.ecr-login.outputs.registry }}/calculator-nginx:${SHA}
