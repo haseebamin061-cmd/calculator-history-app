@@ -1,0 +1,71 @@
+apiVersion: batch/v1
+kind: CronJob
+
+metadata:
+  name: database-backup
+  namespace: {{ .Release.Namespace }}
+
+spec:
+
+  schedule: "*/2 * * * *"
+
+  successfulJobsHistoryLimit: 3
+
+  failedJobsHistoryLimit: 1
+
+  jobTemplate:
+
+    spec:
+
+      template:
+
+        spec:
+
+          restartPolicy: Never
+
+          containers:
+
+          - name: backup
+
+            image: mysql:8.0
+
+            env:
+
+            - name: MYSQL_HOST
+              value: mysql
+
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_DATABASE
+
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_USER
+
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
+
+            command:
+            - sh
+            - -c
+            - |
+              echo "CronJob Backup Started"
+
+              mysqldump \
+                --no-tablespaces \
+                -h ${MYSQL_HOST} \
+                -u ${MYSQL_USER} \
+                -p${MYSQL_PASSWORD} \
+                ${MYSQL_DATABASE} \
+                > /tmp/backup.sql
+
+              echo "Backup Finished"
+
+              head -20 /tmp/backup.sql

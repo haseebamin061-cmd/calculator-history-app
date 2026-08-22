@@ -1,0 +1,11 @@
+apiVersion: v2
+
+name: calculator
+
+description: Production Calculator Application using Kubernetes
+
+type: application
+
+version: 1.0.0
+
+appVersion: "2.0.0"

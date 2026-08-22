@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: DaemonSet
+
+metadata:
+  name: logging-agent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "calculator.labels" . | nindent 4 }}
+
+spec:
+  selector:
+    matchLabels:
+      app: logging-agent
+
+  template:
+    metadata:
+      labels:
+        app: logging-agent
+
+    spec:
+      containers:
+        - name: logger
+          image: "{{ .Values.loggingAgent.image.repository }}:{{ .Values.loggingAgent.image.tag }}"
+          imagePullPolicy: {{ .Values.loggingAgent.image.pullPolicy }}
+
+          command:
+            - sh
+            - -c
+            - |
+              while true
+              do
+                echo "Logging agent running on $(hostname)"
+                date
+                sleep 10
+              done

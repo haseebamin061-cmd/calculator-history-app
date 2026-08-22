@@ -1,0 +1,65 @@
+frontend:
+  replicaCount: 2
+
+  image:
+    repository: 375760496125.dkr.ecr.ap-southeast-1.amazonaws.com/calculator-nginx
+    tag: abce344
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 80
+    nodePort: 30080
+
+backend:
+  replicaCount: 1
+
+  image:
+    repository: 375760496125.dkr.ecr.ap-southeast-1.amazonaws.com/calculator-backend
+    tag: abce344
+    pullPolicy: IfNotPresent
+
+  service:
+    port: 5000
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+ingress:
+  enabled: true
+  host: calculator.local
+
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPU: 50
+
+mysql:
+  auth:
+    rootPassword: root123
+    database: calculator
+    username: calculator
+    password: calculator123
+
+  service:
+    port: 3306
+
+  image:
+    repository: mysql
+    tag: "8.0"
+    pullPolicy: IfNotPresent
+
+  persistence:
+    size: 2Gi
+
+loggingAgent:
+  image:
+    repository: busybox
+    tag: "latest"
+    pullPolicy: IfNotPresent
