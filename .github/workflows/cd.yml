@@ -38,9 +38,8 @@ jobs:
           kubectl get nodes
 
       - name: Deploy Calculator with Helm
-        working-directory: calculator-chart
         run: |
-          helm upgrade --install calculator . \
+          helm upgrade --install calculator ./calculator-chart \
             --namespace calculator \
             --create-namespace \
             --set frontend.image.repository=375760496125.dkr.ecr.ap-southeast-1.amazonaws.com/calculator-nginx \
