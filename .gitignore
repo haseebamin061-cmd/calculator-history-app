@@ -14,3 +14,11 @@ __pycache__/
 
 # Logs
 *.log
+
+# Terraform
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/terraform.tfvars
+**/terraform.tfvars.json
+**/terraform-state-backup-*.json
