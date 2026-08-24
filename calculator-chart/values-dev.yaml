@@ -1,8 +1,0 @@
-frontend:
-  replicaCount: 1
-
-backend:
-  replicaCount: 1
-
-hpa:
-  enabled: false

@@ -1,5 +1,5 @@
 frontend:
-  replicaCount: 2
+  replicaCount: 1
 
   image:
     repository: 375760496125.dkr.ecr.ap-southeast-1.amazonaws.com/calculator-nginx
@@ -34,12 +34,6 @@ ingress:
   enabled: true
   host: calculator.local
 
-hpa:
-  enabled: true
-  minReplicas: 1
-  maxReplicas: 5
-  targetCPU: 50
-
 mysql:
   auth:
     rootPassword: root123
@@ -59,9 +53,3 @@ mysql:
     enabled: true
     storageClass: gp2
     size: 2Gi
-
-loggingAgent:
-  image:
-    repository: busybox
-    tag: "latest"
-    pullPolicy: IfNotPresent

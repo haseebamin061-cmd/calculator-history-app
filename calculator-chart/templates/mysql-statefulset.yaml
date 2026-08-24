@@ -6,9 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 
 spec:
-
   serviceName: mysql
-
   replicas: 1
 
   selector:
@@ -16,66 +14,66 @@ spec:
       app: mysql
 
   template:
-
     metadata:
       labels:
         app: mysql
 
     spec:
-
       containers:
+        - name: mysql
+          image: "{{ .Values.mysql.image.repository }}:{{ .Values.mysql.image.tag }}"
+          imagePullPolicy: {{ .Values.mysql.image.pullPolicy }}
 
-      - name: mysql
+          ports:
+            - containerPort: 3306
 
-        image: "{{ .Values.mysql.image.repository }}:{{ .Values.mysql.image.tag }}"
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
 
-        imagePullPolicy: {{ .Values.mysql.image.pullPolicy }}
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_DATABASE
 
-        ports:
-        - containerPort: 3306
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_USER
 
-        env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
 
-        - name: MYSQL_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: MYSQL_ROOT_PASSWORD
+          volumeMounts:
+            - name: mysql-storage
+              mountPath: /var/lib/mysql
 
-        - name: MYSQL_DATABASE
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: MYSQL_DATABASE
-
-        - name: MYSQL_USER
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: MYSQL_USER
-
-        - name: MYSQL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: MYSQL_PASSWORD
-
-        volumeMounts:
-
-        - name: mysql-storage
-          mountPath: /var/lib/mysql
-
-        - name: mysql-init
-          mountPath: /docker-entrypoint-initdb.d
+            - name: mysql-init
+              mountPath: /docker-entrypoint-initdb.d
 
       volumes:
+        - name: mysql-init
+          configMap:
+            name: mysql-init-script
 
-      - name: mysql-storage
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-storage
 
-        persistentVolumeClaim:
-          claimName: mysql-pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
 
-      - name: mysql-init
+        storageClassName: {{ .Values.mysql.persistence.storageClass | quote }}
 
-        configMap:
-          name: mysql-init-script
+        resources:
+          requests:
+            storage: {{ .Values.mysql.persistence.size }}

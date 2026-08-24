@@ -21,113 +21,75 @@ spec:
 
     spec:
 
-      serviceAccountName: app-reader
-
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              preference:
-                matchExpressions:
-                  - key: workload
-                    operator: In
-                    values:
-                      - application
-
       nodeSelector:
         workload: application
 
       initContainers:
+        - name: wait-for-mysql
+          image: busybox
 
-      - name: wait-for-mysql
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for MySQL..."
 
-        image: busybox
+              until nc -z mysql 3306
+              do
+                echo "MySQL not ready..."
+                sleep 2
+              done
 
-        command:
-          - sh
-          - -c
-          - |
-            echo "Waiting for MySQL..."
-
-            until nc -z mysql 3306
-            do
-              echo "MySQL not ready..."
-              sleep 2
-            done
-
-            echo "MySQL Ready!"
+              echo "MySQL Ready!"
 
       containers:
-      - name: backend
+        - name: backend
 
-        image: "{{ required "backend.image.repository is required" .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          image: "{{ required "backend.image.repository is required" .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
 
-        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
 
-        ports:
-        - containerPort: 5000
+          ports:
+            - containerPort: 5000
 
-        resources:
-{{ toYaml .Values.backend.resources | indent 10 }}
+          resources:
+{{ toYaml .Values.backend.resources | indent 12 }}
 
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 5000
-          initialDelaySeconds: 5
-          periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
 
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 5000
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 10
 
-        env:
+          env:
+            - name: APP_VERSION
+              value: "v2"
 
-        - name: APP_VERSION
-          value: "v2"
+            - name: DB_HOST
+              value: mysql
 
-        - name: DB_HOST
-          value: mysql
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_USER
 
-        - name: DB_USER
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: MYSQL_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
 
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: MYSQL_PASSWORD
-
-        - name: DB_NAME
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: MYSQL_DATABASE
-
-      - name: logger
-        image: busybox
-
-        resources:
-          requests:
-            cpu: 10m
-            memory: 16Mi
-          limits:
-            cpu: 50m
-            memory: 32Mi
-
-        command:
-          - sh
-          - -c
-          - |
-            while true
-            do
-              echo "Logger Sidecar Running..."
-              date
-              sleep 10
-            done
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_DATABASE
