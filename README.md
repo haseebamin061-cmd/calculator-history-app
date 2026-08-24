@@ -6,7 +6,11 @@ A production-style containerized calculator application deployed on **Amazon EKS
 This project demonstrates practical cloud infrastructure and DevOps skills including Infrastructure as Code, containerization, Kubernetes orchestration, 
 persistent storage, automated deployments, and AWS networking.
 
------
+## 🖥️ Running Application
+
+The application is deployed on Amazon EKS and consists of a frontend, backend API, and persistent MySQL database.
+
+![Running Calculator Application](docs/screenshots/application.png)
 
 ## 🏗️ Architecture
 
@@ -198,6 +202,12 @@ The cluster also contains:
  - EKS Pod Identity Agent
  - kube-proxy
 
+### Kubernetes Workloads
+
+The production workload is running on an Amazon EKS node with Kubernetes-managed frontend, backend, MySQL, NGINX Ingress, and supporting components.
+
+![Kubernetes Infrastructure](docs/screenshots/kubernetes.png)
+
 
 ## 💾 Persistent MySQL Storage
 
@@ -271,6 +281,11 @@ Typical deployment flow:
 
 This removes the need to manually build and deploy application containers.
 
+### GitHub Actions Deployment
+
+The CI/CD pipeline automatically builds and publishes container images and deploys the application to Amazon EKS using Helm.
+
+![GitHub Actions CI/CD](docs/screenshots/github-actions.png)
 
 ## 📦 Helm
 
