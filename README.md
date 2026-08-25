@@ -14,6 +14,8 @@ The application is deployed on Amazon EKS and consists of a frontend, backend AP
 
 ## 🏗️ Architecture
 
+![AWS EKS Architecture](docs/architecture.png)
+
 
                          GitHub
                             │
